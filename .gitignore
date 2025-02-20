@@ -1,0 +1,46 @@
+# Globalne pliki systemowe
+.DS_Store
+Thumbs.db
+
+# Foldery zależności Node.js (frontend, backend, libs)
+**/node_modules/
+
+# Pliki konfiguracyjne środowiskowe
+**/.env
+**/.env.local
+**/.env.development
+**/.env.production
+**/.env.test
+!**/.env.example
+
+# Logi i pliki debugowania
+**/*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Frontend (Next.js/SvelteKit)
+apps/frontend/.next/
+apps/frontend/out/
+apps/frontend/build/
+
+# Backend (NestJS)
+apps/backend/dist/
+
+# Pliki tymczasowe i cache
+**/*.tmp
+**/*.temp
+
+# Pliki i foldery edytorów/IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Katalogi z raportami pokrycia kodu
+coverage/
+
+# Opcjonalnie: ignorowanie plików specyficznych dla systemu lub narzędzi
+*.swp
