@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { WalletTransaction } from './entities/wallet-transaction.entity';
@@ -16,21 +20,27 @@ export class WalletService {
     private userRepository: Repository<User>,
   ) {}
 
-  async deposit(userId: number, depositDto: DepositDto) {
-    const { amount } = depositDto;
-    const user =
-      (await this.userRepository.findOne({ where: { id: userId } })) ||
-      undefined;
+  private async findUserById(userId: number): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new NotFoundException('User not found');
     }
-    user.balance += amount;
+    return user;
+  }
+
+  async deposit(userId: number, depositDto: DepositDto) {
+    if (depositDto.amount <= 0) {
+      throw new BadRequestException('Amount must be greater than zero');
+    }
+
+    const user = await this.findUserById(userId);
+    user.balance += depositDto.amount;
     await this.userRepository.save(user);
 
     const transaction = this.walletTransactionRepository.create({
       userId: user.id,
       type: 'deposit',
-      amount,
+      amount: depositDto.amount,
     });
     await this.walletTransactionRepository.save(transaction);
 
@@ -38,23 +48,22 @@ export class WalletService {
   }
 
   async withdraw(userId: number, withdrawDto: WithdrawDto) {
-    const { amount } = withdrawDto;
-    const user =
-      (await this.userRepository.findOne({ where: { id: userId } })) ||
-      undefined;
-    if (!user) {
-      throw new BadRequestException('User not found');
+    if (withdrawDto.amount <= 0) {
+      throw new BadRequestException('Amount must be greater than zero');
     }
-    if (user.balance < amount) {
+
+    const user = await this.findUserById(userId);
+    if (user.balance < withdrawDto.amount) {
       throw new BadRequestException('Insufficient funds');
     }
-    user.balance -= amount;
+
+    user.balance -= withdrawDto.amount;
     await this.userRepository.save(user);
 
     const transaction = this.walletTransactionRepository.create({
       userId: user.id,
       type: 'withdrawal',
-      amount,
+      amount: withdrawDto.amount,
     });
     await this.walletTransactionRepository.save(transaction);
 
@@ -62,58 +71,42 @@ export class WalletService {
   }
 
   async transfer(userId: number, transferDto: TransferDto) {
-    const { amount, recipientEmail, recipientUsername } = transferDto;
-
-    const sender =
-      (await this.userRepository.findOne({ where: { id: userId } })) ||
-      undefined;
-    if (!sender) {
-      throw new BadRequestException('Sender not found');
+    if (transferDto.amount <= 0) {
+      throw new BadRequestException('Amount must be greater than zero');
     }
-    if (sender.balance < amount) {
+
+    const sender = await this.findUserById(userId);
+    if (sender.balance < transferDto.amount) {
       throw new BadRequestException('Insufficient funds');
     }
 
-    if (!recipientEmail && !recipientUsername) {
-      throw new BadRequestException(
-        'Please provide recipient email or username',
-      );
-    }
-    let recipient: User | undefined;
-    if (recipientEmail) {
-      recipient =
-        (await this.userRepository.findOne({
-          where: { email: recipientEmail },
-        })) || undefined;
-    }
-    if (!recipient && recipientUsername) {
-      recipient =
-        (await this.userRepository.findOne({
-          where: { username: recipientUsername },
-        })) || undefined;
-    }
+    const recipient = await this.userRepository.findOne({
+      where: [
+        { email: transferDto.recipientEmail },
+        { username: transferDto.recipientUsername },
+      ],
+    });
+
     if (!recipient) {
-      throw new BadRequestException('Recipient not found');
+      throw new NotFoundException('Recipient not found');
     }
 
-    sender.balance -= amount;
-    recipient.balance += amount;
-    await this.userRepository.save(sender);
-    await this.userRepository.save(recipient);
+    sender.balance -= transferDto.amount;
+    recipient.balance += transferDto.amount;
+    await this.userRepository.save([sender, recipient]);
 
-    const senderTransaction = this.walletTransactionRepository.create({
-      userId: sender.id,
-      type: 'transfer-withdrawal',
-      amount,
-    });
-    await this.walletTransactionRepository.save(senderTransaction);
-
-    const recipientTransaction = this.walletTransactionRepository.create({
-      userId: recipient.id,
-      type: 'transfer-deposit',
-      amount,
-    });
-    await this.walletTransactionRepository.save(recipientTransaction);
+    await this.walletTransactionRepository.save([
+      this.walletTransactionRepository.create({
+        userId: sender.id,
+        type: 'transfer-out',
+        amount: transferDto.amount,
+      }),
+      this.walletTransactionRepository.create({
+        userId: recipient.id,
+        type: 'transfer-in',
+        amount: transferDto.amount,
+      }),
+    ]);
 
     return {
       message: 'Transfer successful',

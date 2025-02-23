@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { GameSession } from './entities/game-session.entity';
 import { User } from '../auth/entities/user.entity';
+import { RandomGeneratorService } from '../../common/services/random-generator.service';
 
 @Injectable()
 export class CasinoService {
@@ -11,6 +12,7 @@ export class CasinoService {
     private readonly gameSessionRepository: Repository<GameSession>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly randomGeneratorService: RandomGeneratorService,
   ) {}
 
   private async validateBalance(userId: number, bet: number): Promise<User> {
@@ -29,7 +31,8 @@ export class CasinoService {
     user.balance -= bet;
     await this.userRepository.save(user);
 
-    const gameResult = Math.random() > 0.5 ? 'win' : 'lose';
+    const gameResult =
+      this.randomGeneratorService.getRandom() > 0.5 ? 'win' : 'lose';
     const session = this.gameSessionRepository.create({
       userId,
       result: gameResult,
@@ -44,9 +47,12 @@ export class CasinoService {
     const user = await this.validateBalance(userId, bet);
     user.balance -= bet;
     const symbols = ['🍒', '🍋', '🍊', '🍉', '⭐', '7'];
-    const reel1 = symbols[Math.floor(Math.random() * symbols.length)];
-    const reel2 = symbols[Math.floor(Math.random() * symbols.length)];
-    const reel3 = symbols[Math.floor(Math.random() * symbols.length)];
+    const reel1 =
+      symbols[this.randomGeneratorService.getRandomInt(0, symbols.length - 1)];
+    const reel2 =
+      symbols[this.randomGeneratorService.getRandomInt(0, symbols.length - 1)];
+    const reel3 =
+      symbols[this.randomGeneratorService.getRandomInt(0, symbols.length - 1)];
     const reels = [reel1, reel2, reel3];
     let outcome = 'lose';
     let payout = 0;
@@ -70,7 +76,7 @@ export class CasinoService {
   async playBlackjack(userId: number, bet: number) {
     const user = await this.validateBalance(userId, bet);
     user.balance -= bet;
-    const getCard = () => Math.floor(Math.random() * 11) + 1;
+    const getCard = () => this.randomGeneratorService.getRandomInt(1, 11);
     const playerCards = [getCard(), getCard()];
     const dealerCards = [getCard(), getCard()];
     const playerTotal = playerCards.reduce((a, b) => a + b, 0);
@@ -118,7 +124,7 @@ export class CasinoService {
   async playRoulette(userId: number, bet: number, chosenNumber: number) {
     const user = await this.validateBalance(userId, bet);
     user.balance -= bet;
-    const winningNumber = Math.floor(Math.random() * 37);
+    const winningNumber = this.randomGeneratorService.getRandomInt(0, 36);
     let outcome: string;
     let payout = 0;
     if (winningNumber === chosenNumber) {
@@ -143,8 +149,8 @@ export class CasinoService {
   async playDice(userId: number, bet: number, chosenSum: number) {
     const user = await this.validateBalance(userId, bet);
     user.balance -= bet;
-    const dice1 = Math.floor(Math.random() * 6) + 1;
-    const dice2 = Math.floor(Math.random() * 6) + 1;
+    const dice1 = this.randomGeneratorService.getRandomInt(1, 6);
+    const dice2 = this.randomGeneratorService.getRandomInt(1, 6);
     const sum = dice1 + dice2;
     let outcome: string;
     let payout = 0;
@@ -176,7 +182,8 @@ export class CasinoService {
   async playBaccarat(userId: number, bet: number, betOn: 'player' | 'banker') {
     const user = await this.validateBalance(userId, bet);
     user.balance -= bet;
-    const winner = Math.random() > 0.5 ? 'player' : 'banker';
+    const winner =
+      this.randomGeneratorService.getRandom() > 0.5 ? 'player' : 'banker';
     let outcome: string;
     let payout = 0;
     if (winner === betOn) {
@@ -202,9 +209,12 @@ export class CasinoService {
     const user = await this.validateBalance(userId, bet);
     user.balance -= bet;
     const symbols = ['⭐', '💎', '🍀', '7'];
-    const card1 = symbols[Math.floor(Math.random() * symbols.length)];
-    const card2 = symbols[Math.floor(Math.random() * symbols.length)];
-    const card3 = symbols[Math.floor(Math.random() * symbols.length)];
+    const card1 =
+      symbols[this.randomGeneratorService.getRandomInt(0, symbols.length - 1)];
+    const card2 =
+      symbols[this.randomGeneratorService.getRandomInt(0, symbols.length - 1)];
+    const card3 =
+      symbols[this.randomGeneratorService.getRandomInt(0, symbols.length - 1)];
     const cards = [card1, card2, card3];
     let outcome = 'lose';
     let payout = 0;
@@ -280,6 +290,6 @@ export class CasinoService {
   }
 
   private getRandomCard(): number {
-    return Math.floor(Math.random() * 11) + 1;
+    return this.randomGeneratorService.getRandomInt(1, 11);
   }
 }

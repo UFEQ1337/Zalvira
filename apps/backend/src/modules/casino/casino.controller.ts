@@ -16,6 +16,7 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { GAMES_CONFIG } from './config/games.config';
 
 interface RequestUser {
   id: number;
@@ -88,7 +89,10 @@ export class CasinoController {
   @Get('status')
   @ApiOperation({ summary: 'Sprawdzenie statusu kasyna' })
   getStatus() {
-    return { status: 'Casino backend is up and running' };
+    return {
+      status: 'Casino backend is up and running',
+      games: GAMES_CONFIG,
+    };
   }
 
   @Post('advanced-blackjack')

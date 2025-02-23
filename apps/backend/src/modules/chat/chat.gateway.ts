@@ -28,6 +28,7 @@ export class GameChatGateway
 
   handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
+    client.rooms.forEach((room) => client.leave(room));
   }
 
   @SubscribeMessage('joinRoom')
@@ -46,6 +47,13 @@ export class GameChatGateway
     client: Socket,
     payload: { room: string; user: string; message: string },
   ) {
+    if (!payload.message?.trim()) {
+      this.logger.warn(
+        `Empty message from ${payload.user} in room ${payload.room}`,
+      );
+      return;
+    }
+
     this.logger.log(
       `Message from ${payload.user} in room ${payload.room}: ${payload.message}`,
     );

@@ -3,6 +3,7 @@ import {
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
@@ -32,7 +33,10 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Invalid token format');
     }
     const token = parts[1];
-    const secret = process.env.JWT_SECRET || 'secretKey';
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new InternalServerErrorException('JWT secret is not defined');
+    }
     try {
       const decoded = jwt.verify(token, secret);
       const payload: any = decoded;
