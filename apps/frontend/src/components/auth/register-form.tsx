@@ -1,4 +1,4 @@
-("use client");
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -176,7 +176,7 @@ export function RegisterForm() {
               id="termsAccepted"
               disabled={isLoading}
               checked={form.watch("termsAccepted")}
-              onCheckedChange={(checked) => {
+              onCheckedChange={(checked: boolean) => {
                 form.setValue("termsAccepted", checked as boolean);
               }}
             />
@@ -226,99 +226,5 @@ export function RegisterForm() {
         </p>
       </CardFooter>
     </Card>
-  );
-}
-
-// src/components/auth/auth-guard.tsx
-("use client");
-
-import { ReactNode, useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { isAuthenticated, hasRole } from "@/lib/auth/session";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-
-interface AuthGuardProps {
-  children: ReactNode;
-  requireAdmin?: boolean;
-}
-
-export function AuthGuard({ children, requireAdmin = false }: AuthGuardProps) {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const router = useRouter();
-  const pathname = usePathname();
-
-  useEffect(() => {
-    async function checkAuth() {
-      try {
-        const authenticated = await isAuthenticated();
-
-        if (!authenticated) {
-          if (!isPublicRoute(pathname)) {
-            router.push(
-              `/auth/login?returnUrl=${encodeURIComponent(pathname)}`
-            );
-          } else {
-            setIsAuthorized(true);
-          }
-        } else {
-          if (requireAdmin) {
-            const isAdmin = await hasRole("admin");
-            if (!isAdmin) {
-              router.push("/");
-            } else {
-              setIsAuthorized(true);
-            }
-          } else {
-            if (pathname.startsWith("/auth/") && pathname !== "/auth/logout") {
-              router.push("/");
-            } else {
-              setIsAuthorized(true);
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Auth check error:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    checkAuth();
-  }, [pathname, router, requireAdmin]);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
-
-  if (!isAuthorized && !isPublicRoute(pathname)) {
-    return null;
-  }
-
-  return <>{children}</>;
-}
-
-// Lista publicznie dostępnych tras
-function isPublicRoute(pathname: string): boolean {
-  const publicRoutes = [
-    "/auth/login",
-    "/auth/register",
-    "/auth/forgot-password",
-    "/",
-    "/about",
-    "/terms",
-    "/privacy",
-    "/contact",
-    "/responsible-gaming",
-  ];
-
-  return (
-    publicRoutes.includes(pathname) ||
-    pathname.startsWith("/blog/") ||
-    pathname === "/blog"
   );
 }
