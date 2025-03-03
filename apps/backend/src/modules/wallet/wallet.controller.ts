@@ -1,4 +1,11 @@
-import { Controller, Post, Body, HttpCode, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  UseGuards,
+  Get,
+} from '@nestjs/common';
 import { WalletService } from './wallet.service';
 import { DepositDto } from './dto/deposit.dto';
 import { WithdrawDto } from './dto/withdraw.dto';
@@ -50,5 +57,13 @@ export class WalletController {
   @ApiResponse({ status: 400, description: 'Błędne dane lub brak środków' })
   transfer(@Body() transferDto: TransferDto, @CurrentUser() user: RequestUser) {
     return this.walletService.transfer(user.id, transferDto);
+  }
+
+  @Get('balance')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Pobierz saldo portfela' })
+  @ApiResponse({ status: 200, description: 'Zwraca balans użytkownika' })
+  balance(@CurrentUser() user: RequestUser) {
+    return this.walletService.getBalance(user.id);
   }
 }

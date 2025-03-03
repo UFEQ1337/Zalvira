@@ -28,7 +28,15 @@ export class GameChatGateway
 
   handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
-    client.rooms.forEach((room) => client.leave(room));
+    client.rooms.forEach((room) => {
+      client.leave(room);
+      const adapterRooms = this.io.adapter as unknown as {
+        rooms: Map<string, Set<string>>;
+      };
+      const roomClients = adapterRooms.rooms.get(room);
+      const count = roomClients ? roomClients.size : 0;
+      this.io.to(room).emit('userCount', count);
+    });
   }
 
   @SubscribeMessage('joinRoom')
@@ -37,6 +45,12 @@ export class GameChatGateway
       client.join(room);
       this.logger.log(`Client ${client.id} joined room ${room}`);
       client.emit('joinedRoom', { room });
+      const adapterRooms = this.io.adapter as unknown as {
+        rooms: Map<string, Set<string>>;
+      };
+      const roomClients = adapterRooms.rooms.get(room);
+      const count = roomClients ? roomClients.size : 0;
+      this.io.to(room).emit('userCount', count);
     } else {
       this.logger.error(`Invalid room: ${room}`);
     }

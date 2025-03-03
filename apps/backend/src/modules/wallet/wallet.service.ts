@@ -28,6 +28,11 @@ export class WalletService {
     return user;
   }
 
+  async getBalance(userId: number): Promise<{ balance: number }> {
+    const user = await this.findUserById(userId);
+    return { balance: user.balance };
+  }
+
   async deposit(userId: number, depositDto: DepositDto) {
     if (depositDto.amount <= 0) {
       throw new BadRequestException('Amount must be greater than zero');
