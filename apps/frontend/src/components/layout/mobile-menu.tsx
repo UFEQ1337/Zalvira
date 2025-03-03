@@ -3,13 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/use-auth";
 import { useWallet } from "@/hooks/use-wallet";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { navigationConfig } from "@/config/navigation";
 import { authService } from "@/lib/auth/auth-service";
 import {
   Menu,
@@ -26,11 +24,38 @@ import {
   LucideIcon,
 } from "lucide-react";
 
-type NavItemWithIcon = {
+// Definiowanie typów dla nawigacji
+interface NavItem {
+  label: string;
+  href: string;
+  icon?: string;
+  action?: string;
+}
+
+interface NavItemWithIcon {
   label: string;
   href: string;
   icon: LucideIcon;
   action?: string;
+}
+
+// Konfiguracja nawigacji
+const navigationConfig = {
+  mainMenuItems: [
+    { label: "Strona Główna", href: "/" },
+    { label: "Sloty", href: "/slots" },
+    { label: "Kasyno na żywo", href: "/live-casino" },
+    { label: "Gry stołowe", href: "/table-games" },
+    { label: "Promocje", href: "/promotions" },
+  ],
+  accountSubmenu: [
+    { label: "Profil", href: "/account/profile", icon: "user" },
+    { label: "Portfel", href: "/account/wallet", icon: "wallet" },
+    { label: "Historia gier", href: "/account/history", icon: "history" },
+    { label: "Bonusy", href: "/account/bonuses", icon: "gift" },
+    { label: "Ustawienia", href: "/account/settings", icon: "settings" },
+    { label: "Wyloguj", href: "#", action: "logout", icon: "log-out" },
+  ],
 };
 
 export function MobileMenu() {
@@ -44,8 +69,8 @@ export function MobileMenu() {
   const mainMenuWithIcons: NavItemWithIcon[] = [
     { label: "Strona Główna", href: "/", icon: Home },
     ...navigationConfig.mainMenuItems
-      .filter((item) => item.href !== "/")
-      .map((item) => ({
+      .filter((item: NavItem) => item.href !== "/")
+      .map((item: NavItem) => ({
         ...item,
         icon: getIconForPath(item.href),
       })),

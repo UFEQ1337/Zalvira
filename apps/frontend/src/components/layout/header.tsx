@@ -2,18 +2,33 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/use-auth";
 import { useWallet } from "@/hooks/use-wallet";
 import { Button } from "@/components/ui/button";
-import { MobileMenu } from "./mobile-menu";
+import { MobileMenu } from "@/components/layout/mobile-menu";
 import { UserDropdown } from "@/components/account/user-dropdown";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Logo } from "@/components/ui/logo";
-import { navigationConfig } from "@/config/navigation";
 import { Search } from "lucide-react";
+
+// Definiowanie typów dla elementów nawigacji
+interface NavItem {
+  label: string;
+  href: string;
+}
+
+// Konfiguracja nawigacji
+const navigationConfig = {
+  mainMenuItems: [
+    { label: "Strona Główna", href: "/" },
+    { label: "Sloty", href: "/slots" },
+    { label: "Kasyno na żywo", href: "/live-casino" },
+    { label: "Gry stołowe", href: "/table-games" },
+    { label: "Promocje", href: "/promotions" },
+  ] as NavItem[],
+};
 
 export function Header() {
   const pathname = usePathname();
@@ -45,7 +60,7 @@ export function Header() {
             <Logo />
 
             <nav className="hidden md:flex items-center space-x-1">
-              {navigationConfig.mainMenuItems.map((item) => (
+              {navigationConfig.mainMenuItems.map((item: NavItem) => (
                 <Link
                   key={item.href}
                   href={item.href}
@@ -86,7 +101,15 @@ export function Header() {
                     {currency}
                   </span>
                 </div>
-                <UserDropdown user={user} />
+                {user && (
+                  <UserDropdown
+                    user={{
+                      id: user.id,
+                      username: user.username || undefined,
+                      email: user.email,
+                    }}
+                  />
+                )}
               </>
             ) : (
               <div className="hidden sm:flex items-center gap-2">

@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
   images: {
     domains: ["cdn.casino-assets.com", "game-providers.com"],
     formats: ["image/avif", "image/webp"],
@@ -11,7 +10,9 @@ const nextConfig = {
     defaultLocale: "pl",
   },
   experimental: {
-    serverActions: true,
+    serverActions: {
+      allowedOrigins: ["localhost:3000"],
+    },
     optimizeCss: true,
   },
   async rewrites() {
